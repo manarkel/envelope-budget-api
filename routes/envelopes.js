@@ -74,4 +74,33 @@ router.post('/:id/fund', (req, res) => {
   res.json(env);
 });
 
+// POST /envelopes/transfer/:from/:to
+router.post('/transfer/:from/:to', (req, res) => {
+  const fromId = Number(req.params.from);
+  const toId = Number(req.params.to);
+  const amount = Number(req.body.amount);
+
+  const from = store.getById(fromId);
+  const to = store.getById(toId);
+
+  if (!from || !to) {
+    return res.status(404).json({ error: 'Envelope not found' });
+  }
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: 'Amount must be positive' });
+  }
+  if (amount > from.balance) {
+    return res.status(400).json({ error: 'Insufficient funds in source envelope' });
+  }
+
+  from.balance -= amount;
+  to.balance += amount;
+
+  res.json({
+    message: `Transferred ${amount} from ${from.name} to ${to.name}`,
+    from,
+    to
+  });
+});
+
 module.exports = router;
